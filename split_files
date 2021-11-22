@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+import os, glob, sys, Mp3
+
+sourceDir = "."
+targetDir = "splitedFiles"
+if len( sys.argv )==2:
+    targetDir = sys.argv[1]
+
+if not os.path.isdir(targetDir):
+    os.mkdir(targetDir)
+if not os.path.isdir(targetDir):
+    print("could not create the target dir '"+ sourceDir +"' - Aborting.")
+    exit()
+
+fns = [ os.path.basename(fn) for fn in glob.glob( os.path.join(sourceDir, "*.mp3") ) ]
+
+fns.sort()
+startFileNum = 1
+mp3 = Mp3.Mp3(sourceDir, targetDir, True)
+
+for fn in fns:
+    print("fn",fn,"startFileNum",startFileNum)
+    numFiles = mp3.splitFile(fn, 15*60, startFileNum)
+    print("    Splited the file '"+ fn +"' into %d parts." % numFiles)
+    startFileNum += numFiles

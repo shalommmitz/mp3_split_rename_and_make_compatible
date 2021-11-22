@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+import sys, Mp3
+
+lenSecSplited = 15*60
+
+argv = sys.argv
+if len(argv)!=2 and len(argv)!=3:
+    print("Usage:",argv[0],"<file name> optional:<file number offset>")
+    exit()
+
+fn = argv[1]
+
+# If file does not end w/.mp3, we will transcode, since "codec=copy", which is the default, wont probably work
+transcodeTo44K = not fn.lower().endswith(".mp3")
+
+offset = 1
+if len(argv)==3:
+   offset = int( argv[2] )
+
+targetDir = baseFn = fn[ : -1 * ( len(fn.split(".")[-1])+1 ) ]
+mp3 = Mp3.Mp3(".", targetDir, transcodeTo44K)
+
+numFiles = mp3.splitFile(fn, lenSecSplited)
+print("Splited file '"+ fn +"' into %d parts." % numFiles)
+exit()
+
+if not os.path.isfile(fn):
+    print("The file '"+ fn +"' does not exist - Aborting")
+    exit()
+fileDuration = os.popen("ffmpeg -i '"+ fn +"' 2>&1 | grep Duration").read()
+fileDuration = fileDuration.split()[1].split(".")[0]
+print("File duration is", fileDuration) 
+h, m, s = fileDuration.split(':')
+fileDurationSeconds = int(h) * 3600 + int(m) * 60 + int(s)
+numSplited = ( fileDurationSeconds / lenSecSplited ) + 1
+print("Will split to", numSplited, "parts.")
+if os.path.isdir(targetDir):
+    print("The dir '"+ targetDir +"' pre-exists - Aborting")
+    exit()
+os.makedirs(targetDir)
+for start in range(0, lenSecSplited*numSplited, lenSecSplited):
+    outFileNum  = offset + start/lenSecSplited 
+    outFileName = targetDir +"/"+ str(outFileNum).zfill(2) +".mp3"
+    cmd  = "ffmpeg -v warning"
+    #cmd += " -i '"+ fn +"' -vn -acodec copy -ss "+ str(start)
+    cmd += " -i '"+ fn +"' -vn -ar 44100 -ss "+ str(start)
+    cmd += " -t "+ str(lenSecSplited) +" '"+ outFileName  +"'"
+    print(cmd)
+    #os.system(cmd)

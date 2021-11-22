@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+import os, glob, sys, Mp3
+
+argv = sys.argv
+if len(argv)!=2:
+    print("Usage:", argv[0], "<source_dir>")
+    print("   Converted files will be saved under folder 'convereted_files'")
+    exit()
+
+sourceDir = argv[1]
+if not os.path.isdir(sourceDir):
+    print("Folder '"+ sourceDir +"' does not exsist - Aborting.")
+    exit()
+targetDir = os.path.join(sourceDir, "converted_files")
+
+if not os.path.isdir(targetDir):
+    os.mkdir(targetDir)
+if not os.path.isdir(targetDir):
+    print("Error: could not create the target dir '"+ targetDir +"' - Aborting.")
+    exit()
+
+fns = [ os.path.basename(fn) for fn in glob.glob( os.path.join(sourceDir, "*.mp3") ) ]
+fns.sort()
+
+mp3 = Mp3.Mp3(sourceDir, targetDir, True)
+
+for fn in fns:
+    print("Converting file", fn)
+    mp3.convertFile(fn)
