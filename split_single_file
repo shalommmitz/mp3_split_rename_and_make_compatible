@@ -4,15 +4,23 @@ import sys, Mp3
 lenSecSplited = 15*60
 
 argv = sys.argv
-if len(argv)!=2 and len(argv)!=3:
-    print("Usage:",argv[0],"<file name> optional:<file number offset>")
+if len(argv)<2:
+    print("Usage:",argv[0],"<file name> optional:<file number offset> optional: t (forces transcoding)")
     exit()
 
 fn = argv[1]
 
 # If file does not end w/.mp3, we will transcode, since "codec=copy", which is the default, wont probably work
 transcodeTo44K = not fn.lower().endswith(".mp3")
+try:
+    if argv[3]=="t": transcodeTo44K = True
+except:
+    pass
 
+if transcodeTo44K:
+   print("Will transcode audio for maximum compatbility")
+else:
+   print("Will not transcode audio")
 offset = 1
 if len(argv)==3:
    offset = int( argv[2] )
