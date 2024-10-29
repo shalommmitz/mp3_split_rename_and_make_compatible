@@ -57,5 +57,3 @@ while True:
         if len(ans):
             if ans[0]=="-":
                 first_file_index -= int(ans[1])
-
-
