@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
-import os, glob, sys
+import os, glob, sys, Mp3
+mp3 = Mp3.Mp3(".", ".", True)
 fns = glob.glob("*.mp3")
-fns.sort()
+fns.sort(key=mp3.sort_numericaly_a_list_of_mixed_strings)
 for i in range(1,len(fns)+1):
-   os.system('mv "'+ fns[i-1] +'" '+ str(i).zfill(2) +'.mp3')
+    cmd = 'mv "'+ fns[i-1] +'" '+ str(i).zfill(2) +'.mp3'
+    open("log.txt",'a').write(cmd+"\n")
+    os.system(cmd)
