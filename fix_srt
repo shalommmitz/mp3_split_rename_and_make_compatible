@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+from sys import argv
+import os
+
+if len(argv)!=2:
+    print(f"Usage: {argv[0]} <SRT file name>")
+    exit()
+fn = argv[1]
+if not os.path.isfile(fn):
+    print(f"The file '{fn}' does not exist - Aborting")
+    exit()
+lines = open(fn).read().split("\n")[:-1]
+prev_type = ""; line_num = 1
+for l in lines:
+    if l.startswith("00:") or l.startswith("01:") or l.startswith("02:"): 
+       type = "TS"
+    elif l.isnumeric(): 
+       type = "line num"
+    else: 
+       type = "text"
+
+     
+    match type:
+       case "line num":
+          print()
+       case "TS":
+          if prev_type != "line num":
+              print()
+              print(line_num)
+          line_num += 1
+    print(l)
+    prev_type = type
