@@ -1,28 +1,61 @@
 #!/usr/bin/env python3
-import os
+import os, glob, Mp3
 from sys import argv
 
 bell_mp3 = "/".join(argv[0].split("/")[:-1]) +"/bell.mp3"
 
 if len(argv)<2:
-    print(f"Usage: {argv[0]} how-many-segments optional:starting-segment")
+    print(f"Usage: {argv[0]} num-files-at-once optional: first-file-num (first is 1)")
     exit()
-num_segments = int(argv[1])
+num_files_at_once = int(argv[1])
 if len(argv)>2:
-    start_segment=int(argv[2])
+    first_file_index=int(argv[2]) - 1
 else:
-    start_segment = 1
+    first_file_index = 0
+
+# Set list of files to play
+mp3 = Mp3.Mp3(".", ".", True)
+all_files = []
+for extension in ["mp3", "mp4", "m4b", "mkv", "m4a"]:
+    all_files += glob.glob("*." + extension)
+all_files.sort(key=mp3.sort_numericaly_a_list_of_mixed_strings)
+number_of_all_files = len(all_files)
+
+done = False
+last_file = False
 while True:
-    to_play = ""
-    for i in range(start_segment,start_segment+num_segments):
-        to_play += str(i).zfill(2)+".mp3 "
-    start_segment += num_segments
-    os.system(f"vlc --play-and-exit {to_play} {bell_mp3}")
-    print("Just played:", to_play, "\n")
-    ans = input("q to quit, -# to repeat, or Enter to continue> ")
-    if ans=="q": exit()
-    if len(ans):
-        if ans[0]=="-":
-            start_segment -= int(ans[1])
+    files_to_play = ""
+    done = True
+    for i in range(first_file_index,first_file_index+num_files_at_once):
+        if i == number_of_all_files-1: last_file = True
+        if i>=number_of_all_files:  continue 
+        fn = all_files[i]
+        if not os.path.isfile(fn):
+            print(f"ERROR: the file {fn} does not exist - Aborting")
+            exit()
+        done = False
+        if "'" in fn:
+            files_to_play += f'"{fn}" '
+        else:
+            files_to_play += f"'{fn}' "
+    first_file_index += num_files_at_once    # Set starting index for next list
+    if done:
+        print("No more files to play")
+        exit()
+
+    # Play the files
+    extension = fn.split(".")[-1].lower()
+    extra_args = ""
+    if extension in Mp3.video_extensions:
+        extra_args += "--fullscreen"
+    os.system(f"vlc {extra_args} --play-and-exit {files_to_play} {bell_mp3}")
+    print("\nJust played:", files_to_play, "\n")
+
+    if not last_file:
+        ans = input("q to quit, -# to repeat, or Enter to continue> ")
+        if ans=="q": exit()
+        if len(ans):
+            if ans[0]=="-":
+                first_file_index -= int(ans[1])
 
 
