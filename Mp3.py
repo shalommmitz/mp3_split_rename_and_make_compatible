@@ -1,4 +1,6 @@
-import os, sys
+import os, sys, re
+
+video_extensions = ["mkv", "mp4", "avi"]
 
 class Mp3(object):
     """A class used to manipulate mp3 files."""
@@ -23,6 +25,16 @@ class Mp3(object):
             print("Could not create the dir '"+ self.targetDir +"' - Aborting")
             exit()
 
+    def atoi(self, text):
+        return int(text) if text.isdigit() else text
+    def sort_numericaly_a_list_of_mixed_strings(self, text):
+        '''
+        alist.sort(key=mp3.sort_numericaly_a_list_of_mixed_strings) sorts in human order
+        Taken from stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
+        and nedbatchelder.com/blog/200712/human_sorting.html
+        '''
+        return [ self.atoi(c) for c in re.split(r'(\d+)', text) ]
+
     def __init__(self, sourceDir, targetDir, transcodeTo44K = False):
         """
         Call in a loop to create terminal progress bar
@@ -42,6 +54,7 @@ class Mp3(object):
 
     def convertFile(self, fileName):
         fn = os.path.join(self.sourceDir, fileName)
+        q_fn = fn.replace("'", "'\\''")
         if not os.path.isfile(fn):
             print("The file '"+ fn +"' does not exist - Aborting")
             exit()
@@ -50,7 +63,7 @@ class Mp3(object):
         self.safeMkDir(self.targetDir)
         outFileName = os.path.join(self.targetDir, fileName)
    
-        cmd  = "ffmpeg -v error -i '"+ fn +"' -vn "
+        cmd  = "ffmpeg -v error -i '"+ q_fn +"' -vn "
         cmd += "-f wav - | lame --resample 44.1 --preset standard - '"+ outFileName  +"'"
         os.system(cmd)
         #print cmd
@@ -60,12 +73,16 @@ class Mp3(object):
         """Splits the file into parts of given lenght"""
            
         fn = os.path.join(self.sourceDir, fileName)
+        q_fn = fn.replace("'", "'\\''")
         if not os.path.isfile(fn):
             print("The file '"+ fn +"' does not exist - Aborting")
             exit()
 
         print("\nSpliting file '"+ fileName +"'")
-        fileDuration = os.popen("ffmpeg -i '"+ fn +"' 2>&1 | grep Duration").read()
+        fileDuration = os.popen("ffmpeg -i '"+ q_fn +"' 2>&1 | grep Duration").read()
+        if fileDuration=='':
+            print(f'file duration for the file "{fn}" is empty - Aborting.')
+            exit()
         print("'"+fileDuration+"'")
         fileDuration = fileDuration.split()[1].split(".")[0]
         print("    File duration is", fileDuration)
@@ -84,7 +101,7 @@ class Mp3(object):
             print("startSecond is", startSecond)
             outFileNum  = str(fileNameOffset + i).zfill(2)
             outFileName = os.path.join(self.targetDir, outFileNum +".mp3")
-            cmd  = "ffmpeg -v error -i '"+ fn +"' -vn"
+            cmd  = "ffmpeg -v error -i '"+ q_fn +"' -vn"
             if self.transcodeTo44K:
                 cmd += " -ss "+ str(startSecond)
                 cmd += " -t "+ str(lenghtInSeconds)
@@ -92,7 +109,8 @@ class Mp3(object):
             else:
                 cmd += " -acodec copy -ss "+ str(startSecond)
                 cmd += " -t "+ str(lenghtInSeconds) +" '"+ outFileName  +"'"
-            #print cmd
+            print(cmd)
+            open("log.txt",'a').write(cmd+"\n")
             os.system(cmd)
             self.printProgressBar(i+1,numSplited)
         print() 
